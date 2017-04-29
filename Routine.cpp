@@ -129,14 +129,35 @@ void Routine::ReadInput() {
   float js_x_reading = analogRead(JS_X_PIN);
   float js_y_reading = analogRead(JS_Y_PIN);
 
-  /* map all read values into [0, 1, 2] */
-  uint8_t js_x_axis = round(map(js_x_reading, 50, 950, 0, 2));
-  uint8_t js_y_axis = round(map(js_y_reading, 50, 950, 0, 2));
+  /* map all read values into a smaller range (int8_t) */
+  int8_t js_x_axis = map(round(js_x_reading), 0, 1023, -128, 127);
+  int8_t js_y_axis = map(round(js_y_reading), 0, 1023, -128, 127);
 
-  if (js_x_axis == 1 && js_y_axis == 0 && cursor_d != 2) cursor_d = 0;
-  if (js_x_axis == 2 && js_y_axis == 1 && cursor_d != 3) cursor_d = 1;
-  if (js_x_axis == 1 && js_y_axis == 2 && cursor_d != 0) cursor_d = 2;
-  if (js_x_axis == 0 && js_y_axis == 1 && cursor_d != 1) cursor_d = 3;
+  /* shoddy ascii explaining how inputs are mapped to snake movements:
+   * with the current orientation of the joypad in the physical setup, readings will look like this:
+   *
+   * (127, -128) +-----------+ (-128, -128)
+   *             | \       / |
+   *             |  \  a  /  |
+   *             |   \   /   |
+   *             | d  \ /  b |    x <---+
+   *             |    / \    |          |
+   *             |   /   \   |          v
+   *             |  /  c  \  |          y
+   *             | /       \ |
+   *  (127, 127) +-----------+ (-128,127)
+   *
+   * since the oblique lines are y = x and y = -x it's easy to use simple analitical geometry
+   * to determine which of the a,b,c,d areas the joystick movement falls in, and then map
+   * them to cursor directions. i also used a small threshold on the joystick readings to
+   * avoid accidental movements with joystick light movements.
+   */
+  if ((abs(js_x_axis) > 20) || (abs(js_y_axis) > 20)) {
+    if ((js_y_axis < js_x_axis) && (js_y_axis < - js_x_axis) && (cursor_d != 2)) cursor_d = 0;
+    if ((js_y_axis > js_x_axis) && (js_y_axis < - js_x_axis) && (cursor_d != 1)) cursor_d = 3;
+    if ((js_y_axis > js_x_axis) && (js_y_axis > - js_x_axis) && (cursor_d != 0)) cursor_d = 2;
+    if ((js_y_axis < js_x_axis) && (js_y_axis > - js_x_axis) && (cursor_d != 3)) cursor_d = 1;
+  }
 
 #ifdef DEBUG
   Serial.print(F("Switch:  "));
