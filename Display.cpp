@@ -43,13 +43,23 @@ void Display::DrawLine(uint8_t  x0, uint8_t  y0, uint8_t  x1, uint8_t  x2, uint8
   controller.drawLine(x0, y0, x1, x2, color);
 };
 
-void Display::DrawText(uint8_t x, uint8_t y, String &text) {
+void Display::DrawText(uint8_t x, uint8_t y, const __FlashStringHelper * text) {
 
   controller.setCursor(x, y);
   controller.setTextColor(WHITE, BLACK);
   controller.print(text);
 
 };
+
+
+void Display::DrawText(uint8_t x, uint8_t y, char * text) {
+
+  controller.setCursor(x, y);
+  controller.setTextColor(WHITE, BLACK);
+  controller.print(text);
+
+};
+
 
 void Display::HorizontalSwipe() {
 

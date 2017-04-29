@@ -2,13 +2,25 @@
 #define _routine_h_
 
 #include "Display.h"
+//#define DEBUG 1
 
-#define RANDOMSEED_PIN 2
+/* joystick switch (click) pin (unused) */
 #define JS_S_PIN 8
+
+/* joystick x axis pin */
 #define JS_X_PIN 0
+
+/* joystick y axis pin */
 #define JS_Y_PIN 1
-#define JS_READ_RANGE 2
-#define SNAKE_INITIAL_LENGTH 20
+
+/* random seed floating pin */
+#define RANDOMSEED_PIN 2
+
+#define BASE_DELAY 100
+#define SNAKE_INIT_LENGTH 10
+#define SNAKE_MAX_LENGTH 100
+#define FOOD_INIT_LENGTH 10
+#define FOOD_MAX_LENGTH 200
 
 class Routine {
 
@@ -21,33 +33,30 @@ class Routine {
 
   private:
   /* Game state */
+  /* Array of x,y positions the snake is currently in and its length */
   static uint8_t snake[][2];
   static uint16_t snakeLength;
+  /* Array of x,y positions the food pieces are currently in and its length */
+  static uint8_t food[][2];
+  static uint16_t foodLength;
 
-  /* Game score and delay between each frame */
+  /* Game level and score */
+  static uint8_t level;
   static uint16_t score;
-  static uint16_t delayTime;
 
   /* Snake's head position and current direction */
   static uint8_t cursor_x;
   static uint8_t cursor_y;
   static uint8_t cursor_d;
 
-  /* Joystick input variables */
-  static uint8_t js_switch;
-  static float js_x_reading;
-  static float js_y_reading;
-  static uint8_t js_x_axis;
-  static uint8_t js_y_axis;
-
-  /* Strings for game over message */
-  static String text[];
-
-  /* Initialize a new game */
-  static void NewGame();
+  /* Initialize a new level */
+  static void NewLevel();
 
   /* Read joystick input */
   static void ReadInput();
+
+  /* Test if snake has collided with itself or a barrier */
+  static bool IsCollision();
 
   /* Add a new element to the head of the snake */
   static void AddSnake();
@@ -55,8 +64,11 @@ class Routine {
   /* Pop an element from the back of the snakeLength */
   static void PopSnake();
 
-  /* Test if snake has collided with itself or a barrier */
-  static bool HasCollided();
+  /* Add a food item to a random screen position */
+  static void AddFood();
+
+  /* Remove the food item at the cursor's position from the food array, if it exists. returns false if it doesn't. */
+  static bool EatFood();
 
   /* Game over screen */
   static void GameOver();

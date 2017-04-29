@@ -50,13 +50,13 @@ class Display {
   /* Clear LCD display */
   static void Clear();
 
-  static void PixelOn(uint8_t  x, uint8_t y);
-  static void PixelOff(uint8_t  x, uint8_t y);
-  static uint8_t GetPixel(uint8_t  x, uint8_t y);
+  static void PixelOn(uint8_t, uint8_t);
+  static void PixelOff(uint8_t, uint8_t);
+  static uint8_t GetPixel(uint8_t, uint8_t);
 
-  static void DrawLine(uint8_t x0, uint8_t  y0, uint8_t  x1, uint8_t  x2, uint8_t color);
-  static void DrawText(uint8_t x, uint8_t y, String &text);
-
+  static void DrawLine(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
+  static void DrawText(uint8_t, uint8_t, const __FlashStringHelper *);
+  static void DrawText(uint8_t x, uint8_t y, char * text);
   static void HorizontalSwipe();
   static void VerticalSwipe();
   static void RandomSwipe();
