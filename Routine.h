@@ -50,8 +50,9 @@ class Routine {
   static uint8_t cursor_y;
   static uint8_t cursor_d;
 
-  /* Initialize a new level */
-  static void NewLevel();
+  /* tactile switch clicked */
+  static uint8_t switchClicked;
+  static uint8_t switchPrevState;
 
   /* Read joystick input */
   static void ReadInput();
@@ -70,6 +71,9 @@ class Routine {
 
   /* Remove the food item at the cursor's position from the food array, if it exists. returns false if it doesn't. */
   static bool EatFood();
+
+  /* Initialize a new level */
+  static void NewLevel();
 
   /* Game over screen */
   static void GameOver();

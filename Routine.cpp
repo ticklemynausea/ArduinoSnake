@@ -12,6 +12,9 @@ uint8_t Routine::cursor_x;
 uint8_t Routine::cursor_y;
 uint8_t Routine::cursor_d;
 
+uint8_t Routine::switchClicked = 0;
+uint8_t Routine::switchPrevState = 0;
+
 void Routine::Initialize() {
 
   /* Initialize random number seed */
@@ -77,57 +80,25 @@ void Routine::Step() {
 
 }
 
-void Routine::NewLevel() {
-
-    char strbuf[15];
-
-    /* level intro */
-    Display::HorizontalSwipe();
-    Display::DrawText(1, 1, F("LEVEL BEGIN!"));
-    Display::DrawText(1, 11, F("LEVEL:"));
-    Display::DrawText(40, 11, itoa(level, strbuf, 10));
-    Display::DrawText(1, 21, F("SCORE:"));
-    Display::DrawText(40, 21, itoa(score, strbuf, 10));
-    Display::Update();
-
-    delay(2000);
-
-    /* clear the screen */
-    Display::Clear();
-
-    /* draw a border around the screen */
-    Display::DrawLine(0, 0, LCD_WIDTH - 1, 0, BLACK);
-    Display::DrawLine(0, LCD_HEIGHT-1, LCD_WIDTH-1, LCD_HEIGHT - 1, BLACK);
-    Display::DrawLine(0, 0, 0, LCD_HEIGHT-1, BLACK);
-    Display::DrawLine(LCD_WIDTH-1, 0, LCD_WIDTH-1, LCD_HEIGHT- 1, BLACK);
-
-    /* initialize variables */
-    cursor_x = random(30, LCD_WIDTH - 30);
-    cursor_y = random(30, LCD_HEIGHT - 30);
-    cursor_d = 1;
-
-    /* initialize snake */
-    snakeLength = 0;
-    for (uint8_t i = 0; i < SNAKE_INIT_LENGTH * level && i < SNAKE_MAX_LENGTH; i++) {
-      AddSnake();
-    }
-
-    /* initialize food */
-    foodLength = 0;
-    for (uint8_t i = 0; i < FOOD_INIT_LENGTH * level && i < FOOD_MAX_LENGTH; i++) {
-      AddFood();
-    }
-
-    /* update screen */
-    Display::Update();
-
-}
-
 void Routine::ReadInput() {
 
   uint8_t js_switch = digitalRead(JS_S_PIN);
   float js_x_reading = analogRead(JS_X_PIN);
   float js_y_reading = analogRead(JS_Y_PIN);
+
+  /* js_switch reads 0 when switch is down and 1 when it is up.
+   * switchClicked will be 1 after a full click. */
+  if (js_switch == 0) {
+    if (switchPrevState == 0) {
+      switchClicked = 1;
+      switchPrevState = switchClicked;
+    }
+  } else {
+    if (switchPrevState == 1) {
+      switchClicked = 0;
+      switchPrevState = switchClicked;
+    }
+  }
 
   /* map all read values into a smaller range (int8_t) */
   int8_t js_x_axis = map(round(js_x_reading), 0, 1023, -128, 127);
@@ -163,6 +134,12 @@ void Routine::ReadInput() {
   Serial.print(F("Switch:  "));
   Serial.print(js_switch);
   Serial.print("\t");
+  Serial.print(F("Switch Pressed:  "));
+  Serial.print(switchClicked);
+  Serial.print("\t");
+  Serial.print(F("Switch Prev:  "));
+  Serial.print(switchPrevState);
+  Serial.print("\t");
   Serial.print(F("X-axis: "));
   Serial.print(js_x_axis);
   Serial.print("\t");
@@ -179,6 +156,8 @@ void Routine::ReadInput() {
   Serial.print(cursor_y);
   Serial.print(F("\n"));
 #endif
+
+  delay(50);
 
 }
 
@@ -257,6 +236,58 @@ bool Routine::IsCollision() {
   return Display::GetPixel(cursor_x, cursor_y) == 1;
 }
 
+
+void Routine::NewLevel() {
+
+    char strbuf[15];
+
+    /* level intro */
+    Display::Clear();
+    Display::HorizontalSwipe();
+    Display::DrawText(1, 1, F("LEVEL BEGIN!"));
+    Display::DrawText(1, 11, F("LEVEL:"));
+    Display::DrawText(40, 11, itoa(level, strbuf, 10));
+    Display::DrawText(1, 21, F("SCORE:"));
+    Display::DrawText(40, 21, itoa(score, strbuf, 10));
+    Display::Update();
+
+    while (!switchClicked) {
+      ReadInput();
+    }
+    delay(100);
+
+
+    /* clear the screen */
+    Display::Clear();
+
+    /* draw a border around the screen */
+    Display::DrawLine(0, 0, LCD_WIDTH - 1, 0, BLACK);
+    Display::DrawLine(0, LCD_HEIGHT-1, LCD_WIDTH-1, LCD_HEIGHT - 1, BLACK);
+    Display::DrawLine(0, 0, 0, LCD_HEIGHT-1, BLACK);
+    Display::DrawLine(LCD_WIDTH-1, 0, LCD_WIDTH-1, LCD_HEIGHT- 1, BLACK);
+
+    /* initialize variables */
+    cursor_x = random(30, LCD_WIDTH - 30);
+    cursor_y = random(30, LCD_HEIGHT - 30);
+    cursor_d = 1;
+
+    /* initialize snake */
+    snakeLength = 0;
+    for (uint8_t i = 0; i < SNAKE_INIT_LENGTH * level && i < SNAKE_MAX_LENGTH; i++) {
+      AddSnake();
+    }
+
+    /* initialize food */
+    foodLength = 0;
+    for (uint8_t i = 0; i < FOOD_INIT_LENGTH * level && i < FOOD_MAX_LENGTH; i++) {
+      AddFood();
+    }
+
+    /* update screen */
+    Display::Update();
+
+}
+
 void Routine::GameOver() {
 
   char strbuf[15];
@@ -273,6 +304,9 @@ void Routine::GameOver() {
   level = 1;
   score = 0;
 
-  delay(2000);
+  while (!switchClicked) {
+    ReadInput();
+  }
+  delay(100);
 
 }
