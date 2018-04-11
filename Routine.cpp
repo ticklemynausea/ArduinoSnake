@@ -12,14 +12,21 @@ uint8_t Routine::cursor_x;
 uint8_t Routine::cursor_y;
 uint8_t Routine::cursor_d;
 
+uint8_t Routine::buttons[2] = {A0, A1};
+uint8_t Routine::buttons_state[2] = {HIGH, HIGH};
+uint8_t Routine::buttons_state_prev[2] = {HIGH, HIGH};
+void (*Routine::buttons_callbacks[2])() = {
+  &Routine::MoveLeft,
+  &Routine::MoveRight,
+};
+  
 void Routine::Initialize() {
 
   /* Initialize random number seed */
   randomSeed(analogRead(RANDOMSEED_PIN));
 
-  /* Initialize joystick click */
-  pinMode(JS_S_PIN, INPUT);
-  digitalWrite(JS_S_PIN, HIGH);
+  pinMode(A0, INPUT_PULLUP);
+  pinMode(A1, INPUT_PULLUP);
 
   /* Initialize Nokia LCD display */
   Display::Initialize();
@@ -125,61 +132,32 @@ void Routine::NewLevel() {
 
 void Routine::ReadInput() {
 
-  uint8_t js_switch = digitalRead(JS_S_PIN);
-  float js_x_reading = analogRead(JS_X_PIN);
-  float js_y_reading = analogRead(JS_Y_PIN);
-
-  /* map all read values into a smaller range (int8_t) */
-  int8_t js_x_axis = map(round(js_x_reading), 0, 1023, -128, 127);
-  int8_t js_y_axis = map(round(js_y_reading), 0, 1023, -128, 127);
-
-  /* shoddy ascii explaining how inputs are mapped to snake movements:
-   * with the current orientation of the joypad in the physical setup, readings will look like this:
-   *
-   * (127, -128) +-----------+ (-128, -128)
-   *             | \       / |
-   *             |  \  a  /  |
-   *             |   \   /   |
-   *             | d  \ /  b |    x <---+
-   *             |    / \    |          |
-   *             |   /   \   |          v
-   *             |  /  c  \  |          y
-   *             | /       \ |
-   *  (127, 127) +-----------+ (-128,127)
-   *
-   * since the oblique lines are y = x and y = -x it's easy to use simple analitical geometry
-   * to determine which of the a,b,c,d areas the joystick movement falls in, and then map
-   * them to cursor directions. i also used a small threshold on the joystick readings to
-   * avoid accidental movements with joystick light movements.
-   */
-  if ((abs(js_x_axis) > 20) || (abs(js_y_axis) > 20)) {
-    if ((js_y_axis < js_x_axis) && (js_y_axis < - js_x_axis) && (cursor_d != 2)) cursor_d = 0;
-    if ((js_y_axis > js_x_axis) && (js_y_axis < - js_x_axis) && (cursor_d != 1)) cursor_d = 3;
-    if ((js_y_axis > js_x_axis) && (js_y_axis > - js_x_axis) && (cursor_d != 0)) cursor_d = 2;
-    if ((js_y_axis < js_x_axis) && (js_y_axis > - js_x_axis) && (cursor_d != 3)) cursor_d = 1;
+  for (uint8_t i = 0; i <= 1; i++) {
+    Routine::buttons_state[i] = digitalRead(Routine::buttons[i]);
+    if (Routine::buttons_state[i] == LOW && Routine::buttons_state_prev[i] == HIGH) {
+        Routine::buttons_callbacks[i]();
+        Routine::buttons_state_prev[i] = LOW; 
+    } else if (Routine::buttons_state[i] == HIGH && Routine::buttons_state_prev[i] == LOW) {
+        Routine::buttons_state_prev[i] = HIGH; 
+    }
   }
 
-#ifdef DEBUG
-  Serial.print(F("Switch:  "));
-  Serial.print(js_switch);
-  Serial.print("\t");
-  Serial.print(F("X-axis: "));
-  Serial.print(js_x_axis);
-  Serial.print("\t");
-  Serial.print(F("Y-axis: "));
-  Serial.print(js_y_axis);
-  Serial.print("\t");
-  Serial.print(F("Direction: "));
-  Serial.print(cursor_d);
-  Serial.print("\t");
-  Serial.print(F("X-cursor: "));
-  Serial.print(cursor_x);
-  Serial.print("\t");
-  Serial.print(F("Y-cursor: "));
-  Serial.print(cursor_y);
-  Serial.print(F("\n"));
-#endif
+}
 
+void Routine::MoveLeft() {
+   if (Routine::cursor_d == 3) {
+      Routine::cursor_d = 0; 
+   } else {
+      Routine::cursor_d++; 
+   }
+}
+
+void Routine::MoveRight() {
+   if (Routine::cursor_d == 0) {
+      Routine::cursor_d = 3; 
+   } else {
+      Routine::cursor_d--; 
+   }
 }
 
 void Routine::AddSnake() {

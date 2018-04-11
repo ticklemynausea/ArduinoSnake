@@ -3,16 +3,12 @@
 
 #include "Display.h"
 
-//#define DEBUG 1
+#define DEBUG 1
 
-/* joystick switch (click) pin (unused) */
-#define JS_S_PIN 8
-
-/* joystick x axis pin */
-#define JS_X_PIN 0
-
-/* joystick y axis pin */
-#define JS_Y_PIN 1
+#define KEY_LEFT A0
+#define KEY_UP A1
+#define KEY_DOWN A2
+#define KEY_RIGHT A3 
 
 /* random seed floating pin */
 #define RANDOMSEED_PIN 2
@@ -50,6 +46,16 @@ class Routine {
   static uint8_t cursor_y;
   static uint8_t cursor_d;
 
+  /* Button states and handling routines */
+  static uint8_t buttons[2];
+  static uint8_t buttons_state[2];
+  static uint8_t buttons_state_prev[2];
+  static void (*buttons_callbacks[2])();
+
+  /* Move Snake  */
+  static void MoveLeft(); 
+  static void MoveRight();
+  
   /* Initialize a new level */
   static void NewLevel();
 
